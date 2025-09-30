@@ -1,7 +1,10 @@
 .secrets/
-.env
-.devcontainer/.env
 .vscode/
+
+# uncomment to ignore environment files. this is a common practice to avoid committing sensitive information
+# .env
+# .devcontainer/.env
+
 
 # -- ignore dbt runtime artifacts
 dbt_tweber/target/

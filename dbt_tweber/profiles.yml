@@ -1,6 +1,6 @@
 # ~/.dbt/profiles.yml 
 
-analytics_playground:
+local_postgres:
   target: dev
   outputs:
     dev:
