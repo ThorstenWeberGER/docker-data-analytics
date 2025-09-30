@@ -1,0 +1,73 @@
+{
+    "name": "PySpark PostgreSQL DBT Airflow Dev Container",
+    
+    "dockerComposeFile": [ "docker-compose.yml"],
+    "service": "dev_env",
+    "shutdownAction": "stopCompose",
+    
+    // *** Change to 'root' to match the minimal Dockerfile user ***
+    "remoteUser": "root",
+    "containerUser": "root",
+
+    // change workspaceMount to match projectfolder on host
+    "workspaceFolder": "/app",
+
+    "customizations": {
+        "vscode": {
+            // Settings: These are configuration applied inside the container
+            "settings": {
+
+                // Use a standard Python path often found in these images
+                "python.defaultInterpreterPath": "/usr/local/python", 
+                "python.languageServer": "Pylance",
+
+                // --- Code Quality & Formatting ---
+                "python.formatting.provider": "black",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.sortImports.args": [
+                "--profile",
+                "black"
+                ],
+        
+                // --- Jupyter Notebook Fixes & Behavior ---
+                "jupyter.jupyterServerType": "local", 
+                "jupyter.askForKernelRestart": false,
+                "jupyter.alwaysTrustNotebooks": true,
+                "jupyter.defaultKernel": "python"
+
+            },
+            // load following extensions in dockerized VS Code
+            "extensions": [
+                "ms-python.python",        
+                "ms-python.vscode-pylance", 
+        
+                // Formatting & Linting
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "ms-python.pylint",
+                
+                // Jupyter / Notebooks
+                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter-keymap",
+                "ms-toolsai.jupyter-renderers",
+                
+                // dbt (data build tool) Development
+                "dbt-labs.dbt-power-user",
+
+                // SQL Tools - mtxr.sqltools is a popular extension for database management
+                "mtxr.sqltools",
+                "mtxr.sqltools-driver-pg",
+
+                // Markdown and Documentation
+                "yzhang.markdown-all-in-one"
+            ]
+
+        }
+    } 
+    
+    //,
+    // A list of services to wait for before running the postCreateCommand
+    // We wait for the databases to be up before we attempt to initialize Airflow
+    // "waitFor": ["app_db"] // Uncomment this line if you want to wait for the app_db service
+}

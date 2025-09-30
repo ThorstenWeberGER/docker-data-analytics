@@ -1,0 +1,58 @@
+# version: '3.8'
+
+services:
+  # --- 1. DEVELOPMENT ENVIRONMENT (PySpark/Jupyter) ---
+  dev_env: 
+    container_name: my-pyspark-dev
+    image: apache/spark-py:v3.5.0 
+    restart: always    
+    # Use the build section only for the Dockerfile modifications (like WORKDIR and pip installs)
+    build:
+      context: .. 
+      dockerfile: .devcontainer/Dockerfile
+    # Use env_file to import environment variables from the root .env file
+    env_file:
+      - .env
+    environment: 
+      - SPARK_JARS=/spark/jars/postgresql.jar
+    # Mount the local project folder into the container     
+    volumes:
+      - ..:/app:cached
+    ports:
+      - "${SPARK_EXTERNAL_PORT}:4000" # Spark UI web interface
+      - "8888:8888" # Jupyter Notebook server
+    networks:
+      - my_app_network
+    # Keep the container running indefinitely so VS Code and Jupyter can connect
+    command: ["sleep", "infinity"]
+
+  # --- 2. POSTGRES DATABASE SERVICE ---
+  postgres_db: # note: service name is used as hostname in connection strings!
+    image: postgres:16
+    container_name: my-postgres-server
+    restart: unless-stopped
+    # create volume for persisting the database data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Use env_file to import environment variables from the root .env file
+    # Make sure to set POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB in the .env file
+    # These will be used by the Postgres image to initialize the database
+    # No need to further set the environment variables manually or additionally like
+    # environment: - POSTGRES_USER=${POSTGRES_USER} ... etc.
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_EXTERNAL_PORT}:5432" # map internal postgres port 5432 to external port 5433 for local host
+    networks:
+      - my_app_network
+
+
+# --- NETWORK AND VOLUME CONFIGURATION ---
+networks:
+  # This creates a shared network for containers to find each other
+  my_app_network:
+    driver: bridge
+
+# Named volume for persisting Postgres data
+volumes:
+  postgres_data:

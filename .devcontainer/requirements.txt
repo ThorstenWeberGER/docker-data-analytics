@@ -1,0 +1,13 @@
+# .devcontainer/requirements.txt
+pyspark==3.5.0
+jupyter
+
+# For Postgres
+SQLAlchemy 
+psycopg2-binary 
+
+# Data Science libraries
+pandas
+numpy
+matplotlib 
+seaborn
