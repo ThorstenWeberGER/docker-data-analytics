@@ -4,8 +4,8 @@
 ### 📂 Final Project Directory Structure
 This structure contains your PySpark development environment, the PostgreSQL source/destination, Airflow for orchestration, and all required configuration files.
 
-.
-├── .devcontainer/
+.<br>
+├── .devcontainer/<br>
 │   ├── Dockerfile              # PySpark/DBT container build
 │   ├── airflow.Dockerfile      # Airflow container build (with providers)
 │   ├── docker-compose.yml      # Defines all 5 services (dev, 2xDB, web, sched)
