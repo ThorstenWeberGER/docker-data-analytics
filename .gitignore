@@ -8,4 +8,3 @@ dbt_tweber/target/
 dbt_tweber/dbt_packages/
 dbt_tweber/logs/
 dbt_tweber/.user.yml
-dbt_tweber/profiles.yml
