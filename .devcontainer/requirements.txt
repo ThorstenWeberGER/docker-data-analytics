@@ -11,3 +11,7 @@ pandas
 numpy
 matplotlib 
 seaborn
+
+# dbt core with Postgres adapter
+dbt-core
+dbt-postgres

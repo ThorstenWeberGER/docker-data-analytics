@@ -13,9 +13,10 @@ WORKDIR /projectdata
 # We copy it before installing to leverage Docker's caching if only the requirements change
 COPY .devcontainer/requirements.txt .
 
+# Install system dependencies especially git because the standard git is on host, but not in the container
 RUN set -ex; \
     apt-get update; \
-    apt-get install -y python3-pip wget; \
+    apt-get install -y python3-pip wget git; \
     rm -rf /var/lib/apt/lists/*
 
 # Install core Python packages (Jupyter, Pandas, Numpy)
