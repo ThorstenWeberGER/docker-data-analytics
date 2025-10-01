@@ -1,0 +1,36 @@
+# Dockerfile.airflow
+
+# ----------------------------------------------------
+# Basiskonfiguration
+# ----------------------------------------------------
+FROM apache/airflow:2.7.1-python3.10
+
+ARG AIRFLOW_VERSION=2.7.1
+ARG PYTHON_VERSION=3.10
+ENV AIRFLOW_HOME=/opt/airflow
+
+USER root
+# libpq-dev ist notwendig, damit psycopg2-binary, das Airflow verwendet, 
+# korrekt kompiliert werden kann.
+RUN set -ex; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        libpq-dev \
+        git \
+        build-essential \
+     ; \
+    rm -rf /var/lib/apt/lists/*
+USER airflow
+
+# ----------------------------------------------------
+# Installation of Airflow together /w DBT (for conflict with spark postgres driver)
+# ----------------------------------------------------
+RUN pip install --upgrade pip setuptools
+RUN pip install "apache-airflow[postgres,s3]==${AIRFLOW_VERSION}" \
+    --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt" \
+    --upgrade-strategy eager
+
+# 2. dbt-postgres installieren
+# Da Airflow bereits die Basis-Abhängigkeiten (SQLAlchemy, etc.) gesetzt hat, 
+# wird dbt nun problemlos installiert.
+RUN pip install dbt-postgres cosmos

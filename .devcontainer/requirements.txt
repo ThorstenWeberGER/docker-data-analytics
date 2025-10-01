@@ -13,5 +13,7 @@ matplotlib
 seaborn
 
 # dbt core with Postgres adapter
-dbt-core
-dbt-postgres
+#dbt-core
+#dbt-postgres
+#eliminated because of conflicts with psycopg2-binary and airflow
+#install in airflow Dockerfile instead

@@ -4,7 +4,7 @@ services:
   # --- 1. DEVELOPMENT ENVIRONMENT (PySpark/Jupyter) ---
   dev_env: 
     container_name: my-pyspark-dev
-    image: apache/spark-py:v3.5.0 
+    image: my-pyspark:latest # use custom image if present. else build it
     restart: always    
     # Use the build section only for the Dockerfile modifications (like WORKDIR and pip installs)
     build:
@@ -26,6 +26,7 @@ services:
     # Keep the container running indefinitely so VS Code and Jupyter can connect
     command: ["sleep", "infinity"]
 
+  
   # --- 2. POSTGRES DATABASE SERVICE ---
   postgres_db: # note: service name is used as hostname in connection strings!
     image: postgres:16
@@ -34,6 +35,8 @@ services:
     # create volume for persisting the database data
     volumes:
       - postgres_data:/var/lib/postgresql/data
+        # mit folgendem entrypoint script können wir die airflow db initialisieren
+      - ./airflow_db_init.sql:/docker-entrypoint-initdb.d/airflow_db_init.sql
     # Use env_file to import environment variables from the root .env file
     # Make sure to set POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB in the .env file
     # These will be used by the Postgres image to initialize the database
@@ -45,7 +48,109 @@ services:
       - "${POSTGRES_EXTERNAL_PORT}:5432" # map internal postgres port 5432 to external port 5433 for local host
     networks:
       - my_app_network
+    # make sure service runs and airflow_db is built before dependent services start  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
 
+
+# airflow 
+# ---- 1. initialization service to create db and admin user -----
+  airflow_init:
+    container_name: airflow_init
+    image: my-airflow-dbt:latest # use custom image if present. else build it
+    build:
+      context: .. 
+      dockerfile: .devcontainer/Dockerfile.airflow
+    restart: "no" # only run once, do not restart
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY} 
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_WEBSERVER_SECRET_KEY}
+    volumes:
+      - ../airflow:/opt/airflow
+      - ../dbt_tweber:/dbt
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    networks:
+      - my_app_network
+    # command: runs following command in a linux (-c) bash shell. will create admin user
+    user: "${AIRFLOW_UID}"
+    command: > 
+      bash -c "
+      airflow db init &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || echo 'Admin user already exists'"
+
+
+# ---- 2. main airflow service -----
+  airflow_webserver:
+    container_name: airflow_webserver
+    image: my-airflow-dbt:latest # use custom image if present. else build it
+    restart: always
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      # needed for using LocalExecutor with multiple workers
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth"
+      # This maps the value from the .env file to the Fernet Key variable
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_WEBSERVER_SECRET_KEY} 
+      # This explicitly passes the secret key for session management
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_WEBSERVER_SECRET_KEY}
+    volumes:
+      - ../airflow:/opt/airflow
+      - ../dbt_tweber:/dbt
+    depends_on:
+      airflow_init:
+        condition: service_completed_successfully
+    ports:
+      - "${AIRFLOW_EXTERNAL_PORT}:8080"  # map internal port 8080 to external port 8080 for local host
+    networks:
+      - my_app_network
+    user: "${AIRFLOW_UID}"
+    # start both scheduler and webserver
+    command: >
+      bash -c "
+      airflow scheduler & 
+      airflow webserver"
+
+
+  airflow_scheduler:
+    container_name: airflow_scheduler
+    image: my-airflow-dbt:latest # use custom image previously build in airflow_init 
+    restart: always
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER}:${AIRFLOW_DB_PASSWORD}@${AIRFLOW_DB_HOST}:${AIRFLOW_DB_PORT}/${AIRFLOW_DB_NAME}
+      # needed for using LocalExecutor with multiple workers
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth"
+      # This maps the value from the .env file to the Fernet Key variable
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_WEBSERVER_SECRET_KEY} 
+    volumes:
+      - ../airflow:/opt/airflow
+      - ../dbt_tweber:/dbt
+    # wait till airflow_init is completed
+    depends_on:
+      airflow_init:
+        condition: service_completed_successfully
+    networks:
+      - my_app_network
+    user: "${AIRFLOW_UID}"
+    # start scheduler
+    command: >
+      bash -c "
+      airflow scheduler"
 
 # --- NETWORK AND VOLUME CONFIGURATION ---
 networks:
