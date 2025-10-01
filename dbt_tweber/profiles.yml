@@ -8,7 +8,7 @@ local_postgres:
       host: "{{ env_var('DBT_HOST') }}"
       user: "{{ env_var('DBT_USER') }}"
       password: "{{ env_var('DBT_PASSWORD') }}"
-      port: 5432 # did not found a way to set port as env var in docker container
+      port: "{{ env_var('DBT_PORT') | int }}" # did not found a way to set port as env var in docker container
       dbname: "{{ env_var('DBT_DBNAME') }}"
       schema: "{{ env_var('DBT_SCHEMA') }}"
       threads: 4
