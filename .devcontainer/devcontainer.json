@@ -1,8 +1,11 @@
 {
     "name": "PySpark PostgreSQL DBT Airflow Dev Container",
     
+    // Use the Docker Compose file to define the services
     "dockerComposeFile": [ "docker-compose.yml"],
+    // Set the service to use as the main container for VS Code to connect to
     "service": "dev_env",
+    // Stop the containers when the VS Code window is closed
     "shutdownAction": "stopCompose",
     
     // *** Change to 'root' to match the minimal Dockerfile user ***
@@ -18,7 +21,7 @@
             "settings": {
 
                 // Use a standard Python path often found in these images
-                "python.defaultInterpreterPath": "/usr/local/python", 
+                "python.defaultInterpreterPath": "/usr/bin/python3", 
                 "python.languageServer": "Pylance",
 
                 // --- Code Quality & Formatting ---

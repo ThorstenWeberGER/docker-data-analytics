@@ -7,20 +7,20 @@ USER root
 # Set the working directory for the VS Code mount
 WORKDIR /projectdata
 
-# Copy the requirements file into the container
-# We copy it before installing to leverage Docker's caching if only the requirements change
-COPY .devcontainer/requirements.txt .
-
-# Install system dependencies especially git because the standard git is on host, but not in the container
+# Install system dependencies: Python3, winget, Git into the container
 RUN set -ex; \
     apt-get update; \
     apt-get install -y python3-pip wget git; \
     rm -rf /var/lib/apt/lists/*
 
-# Install core Python packages (Jupyter, Pandas, Numpy)
-RUN pip install --no-cache-dir  -r requirements.txt
 
+# Copy the requirements file into the container and install Python packages
+COPY .devcontainer/requirements.txt .
+RUN pip install --no-cache-dir  -r requirements.txt
 RUN rm requirements.txt
+
+# Create a symbolic link for python3 to python
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Define and download the Driver Version and Spark Jars Path
 # Spark uses Java Database Connectivity (JDBC)

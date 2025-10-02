@@ -1,3 +1,6 @@
+create schema if not exists test_schema;
+set search_path to test_schema;
+
 create table test_table (
     id serial primary key,
     name varchar(100) not null,
@@ -10,4 +13,3 @@ values
 
 select * from test_table;
 
-select * from raw_data;

@@ -1,6 +1,6 @@
 # ~/.dbt/profiles.yml 
 
-local_postgres:
+container_postgres:
   target: dev
   outputs:
     dev:

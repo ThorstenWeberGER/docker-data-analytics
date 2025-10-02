@@ -33,4 +33,5 @@ RUN pip install "apache-airflow[postgres,s3]==${AIRFLOW_VERSION}" \
 # 2. dbt-postgres installieren
 # Da Airflow bereits die Basis-Abhängigkeiten (SQLAlchemy, etc.) gesetzt hat, 
 # wird dbt nun problemlos installiert.
+
 RUN pip install dbt-postgres cosmos

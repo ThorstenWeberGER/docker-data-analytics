@@ -11,3 +11,18 @@ dbt_tweber/target/
 dbt_tweber/dbt_packages/
 dbt_tweber/logs/
 dbt_tweber/.user.yml
+
+# -- ignore airflow runtime artifacts
+airflow/logs/
+airflow/unittests.cfg
+airflow/airflow.db
+airflow/airflow.cfg
+airflow/webserver_config.py
+airflow/airflow-scheduler.pid
+airflow/__pycache__/
+airflow/**/__pycache__/
+airflow/**/*.pyc
+airflow/airflow-webserver.pid
+
+# -- ignore INFO for file deletion tracking
+airflow/!!INFO!!
